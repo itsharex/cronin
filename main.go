@@ -7,6 +7,7 @@ import (
 	"cron/internal/basic/tracing"
 	"cron/internal/models"
 	"cron/internal/server"
+	"cron/internal/server_in"
 	"embed"
 	"log"
 )
@@ -27,7 +28,9 @@ func main() {
 	go tracing.MysqlCollectorListen()
 	// 初始化任务
 	server.InitTask()
-	// 初始化http
+	// 初始化监控
+	go server_in.InitHttp(config.MainConf().System)
+	// 初始化服务http
 	r := server.InitHttp(Resource, isBuildResource == "true")
 	r.Run(":" + config.MainConf().Http.Port)
 }

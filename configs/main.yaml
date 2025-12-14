@@ -1,7 +1,10 @@
 # 服务主要要配置
 ## http配置
 http:
-  port: '9003' # http端口
+  port: '9003' # http 服务端口
+## 系统配置
+system:
+  http_port: '9013' # http 监控端口
 
 ## 任务配置
 task:

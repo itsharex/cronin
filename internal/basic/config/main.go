@@ -6,6 +6,7 @@ import (
 
 type Main struct {
 	Http   *HttpConf   `yaml:"http"`
+	System *SystemConf `yaml:"system"`
 	Task   *TaskConf   `yaml:"task"`
 	Crypto *CryptoConf `yaml:"crypto"`
 	//User   *UserConf   `yaml:"user"` // 用户配置，配置后接口访问需要登录
@@ -14,6 +15,11 @@ type Main struct {
 type HttpConf struct {
 	Port string `yaml:"port"`
 }
+
+type SystemConf struct {
+	HttpPort string `yaml:"http_port"`
+}
+
 type TaskConf struct {
 	LogRetention     string `yaml:"log_retention"`      // 日志保留时间
 	TaskDelRetention string `yaml:"task_del_retention"` // 任务保留时间

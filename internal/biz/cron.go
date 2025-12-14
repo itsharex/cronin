@@ -43,6 +43,19 @@ func cronInit() {
 	//cronRun.Stop() // 停止服务
 }
 
+type Observe struct {
+	CronStart bool // cron 是否启动
+}
+
+// ObserveCheck 监控检查
+func ObserveCheck() *Observe {
+	observe := &Observe{}
+	if cronRun != nil {
+		observe.CronStart = true
+	}
+	return observe
+}
+
 // SkipIfStillRunning 如果先前的调用仍在运行，跳过对 Job 的调用。它在 Info 级别记录跳转到给定记录器的日志。
 func SkipIfStillRunning(logger cron.Logger) cron.JobWrapper {
 	return func(j cron.Job) cron.Job {
