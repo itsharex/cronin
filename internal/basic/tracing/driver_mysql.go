@@ -8,6 +8,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -31,12 +32,13 @@ func MysqlCollectorListen() {
 	defer close(mysqlQueue)
 	// 增加观测点
 	go func() {
-		for range time.Tick(time.Minute * 30) {
-			if len(mysqlQueue) > 2000 {
-				log.Println("[warn] log write queue overstock ", len(mysqlQueue))
-			} else {
-				log.Println("[info] log write queue ok ", len(mysqlQueue))
+		m, _ := otel.GetMeterProvider().Meter("cronin").Int64Histogram("span_write_queue_len")
+		for range time.Tick(time.Minute * 1) {
+			l := len(mysqlQueue)
+			if l > 2000 {
+				log.Println("[warn] log write queue overstock ", l)
 			}
+			m.Record(context.Background(), int64(l))
 		}
 	}()
 
@@ -81,6 +83,19 @@ func writeList(list []models.CronLogSpan) {
 	if err := db.New(ctx).CreateInBatches(list, 100).Error; err != nil {
 		log.Println("log write queue writeList 日志写入失败，", err.Error())
 	}
+}
+
+type Observe struct {
+	SpanWriteQueueLen int // 节点日志写队列长度
+}
+
+// ObserveCheck 监控检查
+func ObserveCheck() *Observe {
+	observe := &Observe{}
+	// 总长 1W，超过2K就说明开始异常了
+	observe.SpanWriteQueueLen = len(mysqlQueue)
+
+	return observe
 }
 
 func sumIndex() {
@@ -245,10 +260,9 @@ func Extract(traceId string) trace.SpanStartOption {
 	if len(ids) < 3 {
 		return nil
 	}
-	hex := fmt.Sprintf("%032x", ids[0]) // 32位
-	traceID, _ := trace.TraceIDFromHex(hex)
-	spanIDHex := fmt.Sprintf("%016x", ids[1]) // 16位
-	spanID, _ := trace.SpanIDFromHex(spanIDHex)
+
+	traceID, _ := trace.TraceIDFromHex(ids[0])
+	spanID, _ := trace.SpanIDFromHex(ids[1])
 
 	lk := &trace.Link{
 		SpanContext: trace.SpanContext{}.WithTraceID(traceID).WithSpanID(spanID),
@@ -264,9 +278,7 @@ func Inject(s trace.Span) string {
 	case *MysqlSpan:
 		tr := val.traceId.String()
 		sp := val.spanId.String()
-		traceId := tr
-		spanId, _ := gen.ParseID(sp)
-		return fmt.Sprintf("%s:%s:0000000000000000:1", traceId, spanId)
+		return fmt.Sprintf("%s:%s:0000000000000000:1", tr, sp)
 	default:
 		return fmt.Sprintf("%+v", s)
 	}

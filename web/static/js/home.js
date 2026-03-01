@@ -463,6 +463,23 @@ var api = {
     },
 
     /**
+     * get请求
+     * @param {string} path 请求路径
+     * @param {object} param 请求参数 将拼url参数
+     * @param {object} header 请求头
+     * @param {function} success 响应结果
+     * @param {object} setting 请求设置
+     */
+    get: function (path, param, header, success, setting) {
+        let url =  this.baseUrl+path
+        let async = true
+        if (setting && typeof setting.async == "boolean"){
+            async = setting.async
+        }
+        this.ajax('get', url, param, header, success, async)
+    },
+
+    /**
      * 内网post请求
      */
     innerPost: function (path, param, success) {
@@ -472,6 +489,22 @@ var api = {
             'Content-Type': 'application/json',
             'env': this.getEnv().env,
             'Authorization': this._getToken()
+        }
+        this.ajax('post', url, param, header, success)
+    },
+
+    /**
+     * post请求
+     * @param {string} path  请求路径
+     * @param {object} param 请求参数 将拼url参数
+     * @param {object} header 请求头
+     * @param {function} success 响应结果
+     */
+    post: function (path, param, header, success) {
+        let url =  this.baseUrl+path
+        param = JSON.stringify(param)
+        if (!header['Content-Type']){
+            header['Content-Type'] = 'application/json'
         }
         this.ajax('post', url, param, header, success)
     },
@@ -557,13 +590,13 @@ var api = {
     systemInfo: function (callback, reload=false) {
         // 不重载，且缓存存在，使用缓存数据
         if (!reload){
-            let list = JSON.parse(localStorage.getItem(Enum.systemInfoKey)) ?? {}
+            let list = JSON.parse(localStorage.getItem(Enum.systemInfoKey)) ?? null
             if (list){
                 return callback(list)
             }
         }
 
-        this.innerGet("/foundation/system_info", null,(res) =>{
+        this.get("/foundation/system_info", null,{'Authorization': this._getToken()}, (res) =>{
             if (!res.status){
                 return callback(res);
             }

@@ -85,7 +85,7 @@
                 if (this.form.account == '' || this.form.password == ''){
                     return this.$message.warning('账号密码不得为空')
                 }
-                api.innerPost("/user/login", this.form, (res) =>{
+                api.post("/user/login", this.form,{}, (res) =>{
                     if (!res.status){
                         return this.$message.error(res.message)
                     }
