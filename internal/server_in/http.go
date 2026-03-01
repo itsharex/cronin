@@ -7,6 +7,9 @@ import (
 )
 
 func InitHttp(conf *config.SystemConf) {
+	if conf == nil || conf.HttpPort == "" {
+		return
+	}
 	mux := http.NewServeMux()
 	// 设置路由
 	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {})

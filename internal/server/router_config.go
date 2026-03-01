@@ -92,7 +92,7 @@ func httpChangeStatus(ctx *gin.Context) {
 			return
 		}
 	} else {
-		if r.Status == models.ConfigStatusActive || r.Status == models.ConfigStatusReject { // 不能操作 通过、驳回
+		if r.Status == models.ConfigStatusActive { // 不能操作 通过、驳回
 			NewReply(ctx).SetError(pb.ParamError, "权限与状态不匹配").RenderJson()
 			return
 		}

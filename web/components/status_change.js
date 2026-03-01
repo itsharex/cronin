@@ -81,6 +81,12 @@ var MyStatusChange = Vue.extend({
                     </el-form-item>
                 </el-form>
             </el-tab-pane>
+            <el-tab-pane v-if="status_show.not">
+                <span slot="label"></span>
+                <el-form ref="form" :model="form" label-width="100px" size="small">
+                    无可变更状态
+                </el-form>
+            </el-tab-pane>
         </el-tabs>
     </el-dialog>`,
 
@@ -120,6 +126,7 @@ var MyStatusChange = Vue.extend({
                 active: false,
                 disable: false,
                 closed: false,
+                not: true,
             }
         }
     },
@@ -189,7 +196,12 @@ var MyStatusChange = Vue.extend({
             }else{
                 return this.$message.warning('业务类型错误！')
             }
-            if (body.status === Enum.StatusActive || body.status === Enum.StatusReject){
+            if (body.status === Enum.StatusActive){
+                path += '?auth_type=audit'
+            }else if (body.status === Enum.StatusReject && (
+                (this.$auth_tag.config_audit && this.type=='config') ||
+                (this.$auth_tag.pipeline_audit && this.type=='pipeline') ||
+                (this.$auth_tag.receive_audit && this.type=='receive'))){
                 path += '?auth_type=audit'
             }else if (body.status === Enum.StatusAudited){
                 let url = '【'+this.info.name+'】'+ window.location.protocol + "//"+window.location.host+'/index?env='+cache.getEnv().env+'#/config_detail?id='+body.id+'&type='+this.type
@@ -214,10 +226,10 @@ var MyStatusChange = Vue.extend({
                 }
             }
             if (this.info.status==Enum.StatusAudited){
-                if ((this.$auth_tag.config_audit && this.type=='config') ||
-                    (this.$auth_tag.pipeline_audit && this.type=='pipeline') ||
-                    (this.$auth_tag.receive_audit && this.type=='receive')){
-                    this.status_show.reject = true // 驳回  需要具有审核权限
+                if (((this.$auth_tag.config_audit || this.$auth_tag.config_status) && this.type=='config') ||
+                    ((this.$auth_tag.pipeline_audit || this.$auth_tag.pipeline_status) && this.type=='pipeline') ||
+                    ((this.$auth_tag.receive_audit || this.$auth_tag.receive_status) && this.type=='receive')){
+                    this.status_show.reject = true // 驳回  具有审核权限或状态操作权限
                 }
             }
             if (this.info.status==Enum.StatusDisable || this.info.status==Enum.StatusReject || this.info.status==Enum.StatusFinish || this.info.status==Enum.StatusError || this.info.status==Enum.StatusAudited){
@@ -241,6 +253,7 @@ var MyStatusChange = Vue.extend({
                     this.status_show.closed = true // 预删除锁定，可以转为草稿后进行编辑
                 }
             }
+            this.status_show.not = (this.status_show.audited + this.status_show.reject + this.status_show.active + this.status_show.disable + this.status_show.closed) === 0
         }
     }
 })

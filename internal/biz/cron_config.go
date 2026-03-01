@@ -51,6 +51,7 @@ func (dm *CronConfigService) List(r *pb.CronConfigListRequest) (resp *pb.CronCon
 		In("create_user_id", r.CreateUserIds).
 		FindInSet("handle_user_ids", r.HandleUserIds).
 		FindInSet("source_ids", r.SourceIds).
+		FindInSet("tag_ids", r.TagIds).
 		Like("name", r.Name)
 	if r.CreateOrHandleUserId > 0 {
 		w.Raw("(create_user_id IN (?) OR FIND_IN_SET(?,handle_user_ids))", r.CreateOrHandleUserId, r.CreateOrHandleUserId)
